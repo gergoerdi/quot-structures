@@ -3,7 +3,6 @@ module Quotient.Algebra where
 private
   open import Relation.Binary.PropositionalEquality as P using (proof-irrelevance; _≡_)
   open import Data.Nat using (ℕ; zero; suc)
-  import Level
 
   open import Data.Vec.N-ary
 
@@ -54,17 +53,9 @@ open import Data.Product
 open import Function
 open import Algebra.FunctionProperties using (Op₁; Op₂)
 
-open import Level
-
-private
-  open import Relation.Binary.PropositionalEquality using (Extensionality)
-  open import Level using (suc) renaming (zero to ℓ₀)
-  postulate
-    extensionality : ∀ {ℓ ℓ′} → Extensionality ℓ ℓ′
-
 import Algebra.FunctionProperties as FunProp
 
-Sound₁ : ∀ {c ℓ} (S : Setoid c ℓ) → let open Setoid S in Op₁ Carrier → Set (ℓ ⊔ c)
+Sound₁ : ∀ {c ℓ} (S : Setoid c ℓ) → let open Setoid S in Op₁ Carrier → Set _
 Sound₁ S f = let open Setoid S in f Preserves _≈_ ⟶ _≈_
 
 quot₁ : ∀ {c ℓ} {S : Setoid c ℓ} → let open Setoid S in
@@ -73,18 +64,20 @@ quot₁ {S = S} {f} prf = rec _ (λ x → [ f x ]) (λ x≈x′ → [ prf x≈x�
   where
   open Setoid S
 
-
-Sound₂ : ∀ {c ℓ} (S : Setoid c ℓ) → let open Setoid S in Op₂ Carrier → Set (ℓ ⊔ c)
+Sound₂ : ∀ {c ℓ} (S : Setoid c ℓ) → let open Setoid S in Op₂ Carrier → Set _
 Sound₂ S ∙ = let open Setoid S in ∙ Preserves₂ _≈_ ⟶ _≈_ ⟶ _≈_
 
 quot₂ : ∀ {c ℓ} {S : Setoid c ℓ} → let open Setoid S in
         {∙ : Op₂ Carrier} → (∙-sound : Sound₂ S ∙) → Op₂ (Quotient S)
-quot₂ {S = S} {_∙_} prf = rec _ (λ x → rec _ (λ y → [ x ∙ y ])
+quot₂ {S = S} {_∙_} prf = rec S (λ x → rec _ (λ y → [ x ∙ y ])
                                 (λ y≈y′ → [ refl ⟨ prf ⟩ y≈y′ ]-cong))
+                                -- (λ {x} {x′} x≈x′ → P.cong (λ ξ → rec S ξ _)
+                                -- (extensionality (λ _ → [ x≈x′ ⟨ prf ⟩ refl ]-cong)))
                                 (λ x≈x′ → extensionality (elim _ _ (λ _ → [ (x≈x′ ⟨ prf ⟩ refl) ]-cong)
                                 (λ _ → proof-irrelevance _ _)))
   where
   open Setoid S
+  postulate extensionality : P.Extensionality _ _
 
 
 quot-assoc : ∀ {c ℓ} {S : Setoid c ℓ} →
