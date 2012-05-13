@@ -104,10 +104,54 @@ quot-comm : ∀ {c ℓ} {S : Setoid c ℓ} →
             {∙ : Op₂ Carrier} → (∙-sound : Sound₂ S ∙) →
             F₀.Commutative ∙ → F.Commutative (quot₂ ∙-sound)
 quot-comm {S = S} sound prf
-  = elim S _
-         (λ x → elim S _ (λ y → [ prf x y ]-cong)
+  = elim S _ (λ x → elim S _ (λ y → [ prf x y ]-cong)
          (λ _ → extensional-irrelevance 0 _ _))
          (λ _ → extensional-irrelevance 1 _ _)
+
+quot-leftDistrib : ∀ {c ℓ} {S : Setoid c ℓ} →
+                   let
+                     open Setoid S
+                     module F₀ = FunProp _≈_
+                     module F = FunProp (_≡_ {A = Quotient S})
+                   in
+                   {* : Op₂ Carrier} → (*-sound : Sound₂ S *) →
+                   {+ : Op₂ Carrier} → (+-sound : Sound₂ S +) →
+                   * F₀.DistributesOverˡ + →
+                   (quot₂ *-sound) F.DistributesOverˡ (quot₂ +-sound)
+quot-leftDistrib {S = S} {*} *-sound {+} +-sound prf
+  = elim S _ (λ x → elim S _ (λ y → elim S _ (λ z → [ prf x y z ]-cong)
+         (λ _ → extensional-irrelevance 0 _ _))
+         (λ _ → extensional-irrelevance 1 _ _))
+         (λ _ → extensional-irrelevance 2 _ _)
+
+quot-rightDistrib : ∀ {c ℓ} {S : Setoid c ℓ} →
+                    let
+                      open Setoid S
+                      module F₀ = FunProp _≈_
+                      module F = FunProp (_≡_ {A = Quotient S})
+                    in
+                    {* : Op₂ Carrier} → (*-sound : Sound₂ S *) →
+                    {+ : Op₂ Carrier} → (+-sound : Sound₂ S +) →
+                    * F₀.DistributesOverʳ + →
+                    (quot₂ *-sound) F.DistributesOverʳ (quot₂ +-sound)
+quot-rightDistrib {S = S} {*} *-sound {+} +-sound prf
+  = elim S _ (λ x → elim S _ (λ y → elim S _ (λ z → [ prf x y z ]-cong)
+         (λ _ → extensional-irrelevance 0 _ _))
+         (λ _ → extensional-irrelevance 1 _ _))
+         (λ _ → extensional-irrelevance 2 _ _)
+
+quot-distrib : ∀ {c ℓ} {S : Setoid c ℓ} →
+               let
+                 open Setoid S
+                 module F₀ = FunProp _≈_
+                 module F = FunProp (_≡_ {A = Quotient S})
+               in
+                 {* : Op₂ Carrier} → (*-sound : Sound₂ S *) →
+                 {+ : Op₂ Carrier} → (+-sound : Sound₂ S +) →
+                 * F₀.DistributesOver + →
+                 (quot₂ *-sound) F.DistributesOver (quot₂ +-sound)
+quot-distrib *-sound +-sound prf
+  = quot-leftDistrib *-sound +-sound (proj₁ prf) , quot-rightDistrib *-sound +-sound (proj₂ prf)
 
 quot-leftIdentity : ∀ {c ℓ} {S : Setoid c ℓ} →
                     let
@@ -119,8 +163,7 @@ quot-leftIdentity : ∀ {c ℓ} {S : Setoid c ℓ} →
                     {ε : Carrier} →
                     F₀.LeftIdentity ε ∙ → F.LeftIdentity [ ε ] (quot₂ ∙-sound)
 quot-leftIdentity {S = S} {∙} sound {ε} prf
-  = elim S _
-         (λ x → [ prf x ]-cong)
+  = elim S _ (λ x → [ prf x ]-cong)
          (λ _ → extensional-irrelevance 0 _ _)
 
 quot-rightIdentity : ∀ {c ℓ} {S : Setoid c ℓ} →
@@ -234,8 +277,20 @@ quot-isRing : ∀ {c ℓ} → (Σ : Ring c ℓ) → let open Ring Σ in
               IsRing (_≡_ {A = Quotient setoid}) (quot₂ +-cong) (quot₂ *-cong) (quot₁ -‿cong) [ 0# ] [ 1# ]
 quot-isRing Σ = record
   { +-isAbelianGroup = quot-isAbelianGroup +-abelianGroup
-  ; *-isMonoid = quot-isMonoid *-monoid
-  ; distrib = {!!}
+  ; *-isMonoid = quot-isMonoid (record
+    { Carrier = Carrier
+    ; _≈_ = _≈_
+    ; _∙_ = _*_
+    ; ε = 1#
+    ; isMonoid = record
+      { isSemigroup = record
+        { isEquivalence = isEquivalence
+        ; assoc = *-assoc
+        ; ∙-cong = *-cong
+ }
+      ; identity = *-identity }
+    })
+  ; distrib = quot-distrib *-cong +-cong distrib
   }
   where
   open Ring Σ
